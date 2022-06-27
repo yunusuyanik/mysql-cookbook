@@ -46,7 +46,9 @@ select trx_id,trx_state,trx_mysql_thread_id,trx_isolation_level,LEFT(trx_query,1
 
 
 # locks
-select * from information_schema.INNODB_LOCKS;
+select * from information_schema.innodb_locks;
+select * from performance_schema.data_lock;
+
 
 SELECT r.trx_wait_started AS wait_started,
        TIMEDIFF(NOW(), r.trx_wait_started) AS wait_age,
