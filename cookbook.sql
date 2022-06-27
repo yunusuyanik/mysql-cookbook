@@ -48,14 +48,6 @@ select trx_id,trx_state,trx_mysql_thread_id,trx_isolation_level,LEFT(trx_query,1
 # locks
 select * from information_schema.INNODB_LOCKS;
 
-SELECT * FROM sys.innodb_lock_waits\G
-
-select
-	r.trx_id waiting_trx_id, r.trx_mysql_thread_id waiting_thread, LEFT(r.trx_query,50) waiting_query, b.trx_id blocking_trx_id, b.trx_mysql_thread_id blocking_thread, LEFT(b.trx_query,50) blocking_query
-from information_schema.innodb_lock_waits w
-join information_schema.innodb_trx b on b.trx_id = w.blocking_trx_id
-join information_schema.innodb_trx r on r.trx_id = w.requesting_trx_id;
-
 SELECT r.trx_wait_started AS wait_started,
        TIMEDIFF(NOW(), r.trx_wait_started) AS wait_age,
        TIMESTAMPDIFF(SECOND, r.trx_wait_started, NOW()) AS wait_age_secs,
@@ -99,16 +91,29 @@ select trx_id,trx_state,trx_mysql_thread_id,trx_isolation_level,LEFT(trx_query,1
 
 
 # lock waits
-select * from information_schema.INNODB_LOCK_WAITS;
+	# For MySQL 5.7 or earlier
+	select * from information_schema.innodb_lock_waits; 
 
+	# For MySQL 8.0
+	select * from performance_schema.data_lock_waits;
 
+	
 
 # blocking related info
-select 
-	r.trx_id waiting_trx_id, r.trx_mysql_thread_id waiting_thread, r.trx_query waiting_query, b.trx_id blocking_trx_id, b.trx_mysql_thread_id blocking_thread, b.trx_query blocking_query
-from information_schema.innodb_lock_waits w
-	join information_schema.innodb_trx b on b.trx_id = w.blocking_trx_id
-	join information_schema.innodb_trx r on r.trx_id = w.requesting_trx_id;
+	# For MySQL 5.7 or earlier
+	select
+	  r.trx_id waiting_trx_id, r.trx_mysql_thread_id waiting_thread, r.trx_query waiting_query, b.trx_id blocking_trx_id, b.trx_mysql_thread_id blocking_thread, b.trx_query blocking_query
+	from information_schema.innodb_lock_waits w
+		join information_schema.innodb_trx b on b.trx_id = w.blocking_trx_id
+		join information_schema.innodb_trx r on r.trx_id = w.requesting_trx_id;
+
+
+	# For MySQL 8.0
+	select
+	  r.trx_id waiting_trx_id, r.trx_mysql_thread_id waiting_thread, r.trx_query waiting_query, b.trx_id blocking_trx_id, b.trx_mysql_thread_id blocking_thread, b.trx_query blocking_query
+	from performance_schema.data_lock_waits w
+		join information_schema.innodb_trx b on b.trx_id = w.blocking_engine_transaction_id
+		join information_schema.innodb_trx r on r.trx_id = w.requesting_engine_transaction_id;
 
 
 
